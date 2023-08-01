@@ -7,6 +7,7 @@
 \begin{code}
 module 2Level.Category where
 
+open import Data.Product using (Σ; _×_; _,_; map; zip)
 open import Level
 open import Relation.Binary.Core using (REL; Rel)
 open import Relation.Binary.Structures using (IsEquivalence)
@@ -97,14 +98,14 @@ And the higher ones.
     sym-assoc₁ : ∀ {A B C D W X Y Z} {f : C ⇒₀ D} {g : B ⇒₀ C} {h : A ⇒₀ B}
            → {f′ : Y ⇒[ f ] Z} → {g′ : X ⇒[ g ] Y} → {h′ : W ⇒[ h ] X}
            → f′ ∘₁ (g′ ∘₁ h′) ≈[ sym-assoc₀ ] (f′ ∘₁ g′) ∘₁ h′
-    refl′ : ∀ {A B X Y} {f : A ⇒₀ B} {f′ : X ⇒[ f ] Y}
+    refl₁ : ∀ {A B X Y} {f : A ⇒₀ B} {f′ : X ⇒[ f ] Y}
           → f′ ≈[ refl₀ ] f′
-    sym′ : ∀ {A B X Y} {f g : A ⇒₀ B} {f′ : X ⇒[ f ] Y} {g′ : X ⇒[ g ] Y} {p : f ≈₀ g}
+    sym₁ : ∀ {A B X Y} {f g : A ⇒₀ B} {f′ : X ⇒[ f ] Y} {g′ : X ⇒[ g ] Y} {p : f ≈₀ g}
          → f′ ≈[ p ] g′ → g′ ≈[ sym₀ p ] f′
-    trans′ : ∀ {A B X Y} {f g h : A ⇒₀ B} {f′ : X ⇒[ f ] Y} {g′ : X ⇒[ g ] Y} {h′ : X ⇒[ h ] Y}
+    trans₁ : ∀ {A B X Y} {f g h : A ⇒₀ B} {f′ : X ⇒[ f ] Y} {g′ : X ⇒[ g ] Y} {h′ : X ⇒[ h ] Y}
                {p : f ≈₀ g} {q : g ≈₀ h}
            → f′ ≈[ p ] g′ → g′ ≈[ q ] h′ → f′ ≈[ trans₀ p q ] h′
-    ∘′-resp-[]≈ : ∀ {A B C X Y Z} {f h : B ⇒₀ C} {g i : A ⇒₀ B}
+    ∘₁-resp-[]≈ : ∀ {A B C X Y Z} {f h : B ⇒₀ C} {g i : A ⇒₀ B}
                     {f′ : Y ⇒[ f ] Z} {h′ : Y ⇒[ h ] Z} {g′ : X ⇒[ g ] Y} {i′ : X ⇒[ i ] Y}
                     {p : f ≈₀ h} {q : g ≈₀ i}
                 → f′ ≈[ p ] h′ → g′ ≈[ q ] i′ → f′ ∘₁ g′ ≈[ ∘₀-resp-≈₀ p q ] h′ ∘₁ i′
@@ -143,10 +144,10 @@ Slice C x = record
   ; identity²₁ = identity²
   ; assoc₁ = assoc
   ; sym-assoc₁ = sym-assoc
-  ; refl′ = Equiv.refl
-  ; sym′ = Equiv.sym
-  ; trans′ = Equiv.trans
-  ; ∘′-resp-[]≈ = ∘-resp-≈
+  ; refl₁ = Equiv.refl
+  ; sym₁ = Equiv.sym
+  ; trans₁ = Equiv.trans
+  ; ∘₁-resp-[]≈ = ∘-resp-≈
   }
   where
     open 1Cat C renaming (Obj to 1Obj)
@@ -174,7 +175,8 @@ Cat⇒1Cat C = record
   } where open Category C
 \end{code}
 
-More interestingly, we get a full Displayed Category.
+More interestingly, we get a full Displayed Category. In other words, we can see that there is a
+clean partitioning of the pieces of a Category.
 \begin{code}
 open import Categories.Category.Displayed
 
@@ -190,13 +192,47 @@ Cat⇒Disp C = record
   ; identity²′ = identity²₁
   ; assoc′ = assoc₁
   ; sym-assoc′ = sym-assoc₁
-  ; refl′ = refl′
-  ; sym′ = sym′
-  ; trans′ = trans′
-  ; ∘′-resp-[]≈ = ∘′-resp-[]≈
+  ; refl′ = refl₁
+  ; sym′ = sym₁
+  ; trans′ = trans₁
+  ; ∘′-resp-[]≈ = ∘₁-resp-[]≈
   } where open Category C
 \end{code}
-We also need all the laws too, but these can be filled-in later.
+
+A very dependent 2-argument uncurry.
+\begin{code}
+Σ₂ : {ℓa ℓb ℓc ℓd ℓf ℓg : Level} {A : Set ℓa} {B : A → Set ℓb} {C : Set ℓc} {D : C → Set ℓd}
+  (F : (a : A) → (c : C) → Set ℓf) → (G : {a : A} {c : C} → B a → F a c → D c → Set ℓg) →
+  Σ A B → Σ C D → Set (ℓf ⊔ ℓg)
+Σ₂ F G (a , b) (c , d) = Σ (F a c) λ x → G b x d
+\end{code}
+Repeating the construction in Displayed in a slightly different way, we can squeeze a
+Category down into a 1Cat by level mixing. The level mixing was a hint that squeezing was
+going on in previous constructions!
+\begin{code}
+Cat⇒TotalCat : {o₀ o₁ ℓ₀ ℓ₁ e₀ e₁ : Level} (C : Category o₀ o₁ ℓ₀ ℓ₁ e₀ e₁) → 1Cat (o₀ ⊔ o₁) (ℓ₀ ⊔ ℓ₁) (e₀ ⊔ e₁)
+Cat⇒TotalCat C = record
+  { Obj = Σ Obj DObj
+  ; _⇒_ = Σ₂ _⇒₀_ _⇒[_]_
+  ; _≈_ = Σ₂ _≈₀_ _≈[_]_
+  ; id = id₀ , id₁
+  ; _∘_ = zip _∘₀_ _∘₁_
+  ; assoc = assoc₀ , assoc₁
+  ; sym-assoc = sym-assoc₀ , sym-assoc₁
+  ; identityˡ = identityˡ₀ , identityˡ₁
+  ; identityʳ = identityʳ₀ , identityʳ₁
+  ; identity² = identity²₀ , identity²₁
+  ; equiv = record
+    { refl = refl₀ , refl₁
+    ; sym = map sym₀ sym₁
+    ; trans = zip trans₀ trans₁
+    }
+  ; ∘-resp-≈ = zip ∘₀-resp-≈₀ ∘₁-resp-[]≈
+  }
+  where open Category C
+\end{code}
+It should furthermore be obvious that this is a generalized Σ construction.
+
 Notes:
 \begin{itemize}
 \item Is here a good place to also talk about levels tracking
