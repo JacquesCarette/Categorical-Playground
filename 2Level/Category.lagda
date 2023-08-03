@@ -233,6 +233,36 @@ Cat⇒TotalCat C = record
 \end{code}
 It should furthermore be obvious that this is a generalized Σ construction.
 
+\section{Further kit}
+The crazyness that is a Functor in this setting.
+\begin{code}
+record DFunctor {o₀ o₁ ℓ₀ ℓ₁ e₀ e₁ o₂ o₃ ℓ₂ ℓ₃ e₂ e₃ : Level}
+  (C : Category o₀ o₁ ℓ₀ ℓ₁ e₀ e₁) (D : Category o₂ o₃ ℓ₂ ℓ₃ e₂ e₃) :
+  Set (o₀ ⊔ o₂ ⊔ ℓ₀ ⊔ ℓ₂ ⊔ e₀ ⊔ e₂) where
+  private
+    module C = Category C
+    module D = Category D
+  field
+    F₀ : C.Obj → D.Obj
+    F₁ : ∀ {A B} (f : A C.⇒₀ B ) → (F₀ A) D.⇒₀ (F₀ B)
+
+    identity     : ∀ {A} → F₁ (C.id₀ {A}) D.≈₀ D.id₀
+    homomorphism : ∀ {X Y Z} {f : X C.⇒₀ Y } {g : Y C.⇒₀ Z} →
+                     F₁ (g C.∘₀ f) D.≈₀ F₁ g D.∘₀ F₁ f
+    F-resp-≈     : ∀ {A B} {f g : A C.⇒₀ B} → f C.≈₀ g → F₁ f D.≈₀ F₁ g
+
+\end{code}
+
+\section{Lenses}
+
+For us, lenses are \emph{lawful}, i.e. correspond to constant complement lenses,
+so that Lens S A is Σ Type (λ C → S ≅ A × C).
+
+We can use displayed categories to lift lenses to the categorical level.
+\begin{spec}
+CLens : {o₀ o₁ ℓ₀ ℓ₁ e₀ e₁ : Level} (S : Category o₀ o₁ ℓ₀ ℓ₁ e₀ e₁) (A : 1Cat o₀ ℓ₀ e₀) →
+  Σ (Displayed A) (λ DC → Equivalent S DC) 
+\end{spec}
 Notes:
 \begin{itemize}
 \item Is here a good place to also talk about levels tracking
